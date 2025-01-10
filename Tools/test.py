@@ -34,8 +34,8 @@ def get_latest_version(repo):
 
 def download_and_replace(latest_version):
     """下載最新版本並替換執行檔"""
-    download_url = f"https://github.com/{REPO}/releases/download/{latest_version}/your-tool.exe"
-    temp_file = "your-tool-latest.exe"
+    download_url = f"https://github.com/{REPO}/releases/download/{latest_version}/update.exe"
+    temp_file = "update-latest.exe"
 
     try:
         # 下載最新版本
@@ -50,7 +50,7 @@ def download_and_replace(latest_version):
         time.sleep(2)
 
         # 替換執行檔
-        os.replace(temp_file, "your-tool.exe")
+        os.replace(temp_file, "update.exe")
         print("更新完成！")
 
         # 提示更新完成
@@ -66,6 +66,7 @@ def check_for_update():
         return
 
     latest_version = get_latest_version(REPO)
+    print(latest_version)
     if latest_version is None:
         messagebox.showerror("錯誤", "無法檢查最新版本，請稍後再試。")
     elif latest_version != CURRENT_VERSION:
