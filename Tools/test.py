@@ -4,9 +4,10 @@ import requests
 import os
 import sys
 import time
+import subprocess
 
 # 當前版本
-CURRENT_VERSION = "v1.0.0"
+CURRENT_VERSION = "v1.0.2"
 
 # GitHub 儲存庫資訊
 REPO = "igs-jawenchen/LocalTest"
@@ -32,10 +33,10 @@ def get_latest_version(repo):
         print(f"無法獲取最新版本: {e}")
         return None
 
-def download_and_replace(latest_version):
-    """下載最新版本並替換執行檔"""
+def download_update(latest_version):
+    """下載最新版本"""
     download_url = f"https://github.com/{REPO}/releases/download/{latest_version}/update.exe"
-    temp_file = "update-latest.exe"
+    temp_file = "temp_update.exe"
 
     try:
         # 下載最新版本
@@ -45,19 +46,29 @@ def download_and_replace(latest_version):
                 if chunk:
                     f.write(chunk)
         print(f"已下載最新版本：{temp_file}")
-
-        # 等待主工具退出
-        time.sleep(2)
-
-        # 替換執行檔
-        os.replace(temp_file, "update.exe")
-        print("更新完成！")
-
-        # 提示更新完成
-        messagebox.showinfo("更新完成", "工具已成功更新到最新版本，請重新啟動！")
-        sys.exit()  # 結束程式
+        return temp_file
     except Exception as e:
-        messagebox.showerror("更新失敗", f"更新過程中出現錯誤：{e}")
+        messagebox.showerror("更新失敗", f"下載過程中出現錯誤：{e}")
+        return None
+
+def replace_and_restart(temp_file):
+    """使用中繼程式替換執行檔並重新啟動"""
+    updater_script = "updater.bat"
+
+    # 建立批次檔案
+    with open(updater_script, "w") as f:
+        f.write(f"@echo off\n")
+        f.write(f"timeout /t 3 > nul\n")  # 等待 3 秒，確保主程式退出
+        f.write(f"move /y {temp_file} update.exe\n")  # 替換執行檔
+        f.write(f"start update.exe\n")  # 啟動新的程式
+        f.write(f"del \"%~f0\"\n")  # 刪除自身
+
+    # 執行批次檔並退出主程式
+    try:
+        subprocess.Popen(["cmd", "/c", updater_script])
+        sys.exit(0)
+    except Exception as e:
+        messagebox.showerror("更新失敗", f"替換過程中出現錯誤：{e}")
 
 def check_for_update():
     """檢查更新"""
@@ -66,7 +77,6 @@ def check_for_update():
         return
 
     latest_version = get_latest_version(REPO)
-    print(latest_version)
     if latest_version is None:
         messagebox.showerror("錯誤", "無法檢查最新版本，請稍後再試。")
     elif latest_version != CURRENT_VERSION:
@@ -75,7 +85,9 @@ def check_for_update():
             f"檢測到新版本：{latest_version}，是否立即更新？"
         )
         if result:
-            download_and_replace(latest_version)
+            temp_file = download_update(latest_version)
+            if temp_file:
+                replace_and_restart(temp_file)
     else:
         messagebox.showinfo("已是最新版本", "目前已是最新版本，無需更新。")
 
@@ -86,7 +98,7 @@ def create_gui():
     root.geometry("300x150")
 
     # 更新按鈕
-    update_button = tk.Button(root, text="更新", font=("Arial", 14), command=check_for_update)
+    update_button = tk.Button(root, text="檢查更新", font=("Arial", 14), command=check_for_update)
     update_button.pack(pady=50)
 
     root.mainloop()
