@@ -7,7 +7,7 @@ import time
 import subprocess
 
 # 當前版本
-CURRENT_VERSION = "v1.0.3"
+CURRENT_VERSION = "v1.0.4"
 
 # GitHub 儲存庫資訊
 REPO = "igs-jawenchen/LocalTest"
@@ -20,17 +20,22 @@ def is_online():
     except requests.ConnectionError:
         return False
 
-def get_latest_version(repo):
-    """從 GitHub API 獲取最新版本"""
+def get_latest_release_info(repo):
+    """從 GitHub API 獲取最新版本資訊"""
     url = f"https://api.github.com/repos/{repo}/releases/latest"
     try:
         response = requests.get(url)
         if response.status_code == 200:
-            return response.json()["tag_name"]  # 返回最新版本號
+            data = response.json()
+            return {
+                "version": data["tag_name"],  # 最新版本號
+                "name": data["name"],  # Release 標題
+                "body": data["body"]  # Release 描述
+            }
         else:
             return None
     except Exception as e:
-        print(f"無法獲取最新版本: {e}")
+        print(f"無法獲取最新版本資訊: {e}")
         return None
 
 def download_update(latest_version):
@@ -76,13 +81,22 @@ def check_for_update():
         messagebox.showwarning("無網路連線", "目前處於離線狀態，無法檢查更新。")
         return
 
-    latest_version = get_latest_version(REPO)
-    if latest_version is None:
+    release_info = get_latest_release_info(REPO)
+    if release_info is None:
         messagebox.showerror("錯誤", "無法檢查最新版本，請稍後再試。")
-    elif latest_version != CURRENT_VERSION:
+        return
+
+    latest_version = release_info["version"]
+    release_name = release_info["name"]
+    release_body = release_info["body"]
+
+    if latest_version != CURRENT_VERSION:
+        # 顯示更新資訊
         result = messagebox.askyesno(
             "有新版本可用",
-            f"檢測到新版本：{latest_version}，是否立即更新？"
+            f"檢測到新版本：{latest_version}\n\n"
+            f"更新內容：\n{release_name}\n\n{release_body}\n\n"
+            "是否立即更新？"
         )
         if result:
             temp_file = download_update(latest_version)
