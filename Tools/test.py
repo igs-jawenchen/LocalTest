@@ -7,7 +7,7 @@ import time
 import subprocess
 
 # 當前版本
-CURRENT_VERSION = "v1.0.2"
+CURRENT_VERSION = "v1.0.3"
 
 # GitHub 儲存庫資訊
 REPO = "igs-jawenchen/LocalTest"
