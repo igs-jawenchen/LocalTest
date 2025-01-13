@@ -95,7 +95,7 @@ def check_for_update():
         result = messagebox.askyesno(
             "有新版本可用",
             f"檢測到新版本：{latest_version}\n\n"
-            f"更新內容：\n{release_name}\n\n{release_body}\n\n"
+            f"更新內容：\n{release_body}\n\n"
             "是否立即更新？"
         )
         if result:
